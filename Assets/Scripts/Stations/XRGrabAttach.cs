@@ -25,14 +25,14 @@ namespace ReadyPlayerMe.XR
         [SerializeField] private Vector3 positionOffset;
         [SerializeField] private Vector3 rotationOffset;
         [SerializeField] private XRHandAnimation handAnimation;
-        private int defaultLayerMask;
+        private LayerMask defaultLayerMask;
 
-        private XRGrabInteractable grabInteractable;
-        private int ignoreRaycastMask;
-        private IXRInteractable interactable;
-        private XRInteractorLineVisual interactorLineVisual;
+        private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grabInteractable;
+        private LayerMask ignoreRaycastMask;
+        private UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractable interactable;
+        private UnityEngine.XR.Interaction.Toolkit.Interactors.Visuals.XRInteractorLineVisual interactorLineVisual;
 
-        private XRPokeInteractor pokeInteractor;
+        private UnityEngine.XR.Interaction.Toolkit.Interactors.XRPokeInteractor pokeInteractor;
         private float positionMultiplier;
         private Transform trackedHand;
         private VRIK vrik => AvatarComponentReferences.Instance.Vrik;
@@ -49,7 +49,7 @@ namespace ReadyPlayerMe.XR
         {
             Debug.Log("XRGrabAttach enabled");
 
-            grabInteractable = GetComponent<XRGrabInteractable>();
+            grabInteractable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
             grabInteractable.selectEntered.AddListener(OnGrab);
             grabInteractable.selectExited.AddListener(OnRelease);
         }
@@ -94,21 +94,19 @@ namespace ReadyPlayerMe.XR
                 interactorLineVisual.enabled = true;
             }
 
-            grabInteractable.interactionLayerMask = defaultLayerMask;
+            grabInteractable.interactionLayers = defaultLayerMask.value;
 
-            var handedness = releaseInteractor.transform.parent.name.ToLower().Contains("right")
-                ? Handedness.Right
-                : Handedness.Left;
-            playerAnimator.SetInteger(handedness == Handedness.Right ? rightHandPoseHash : leftHandPoseHash, 0);
+            bool isRight = releaseInteractor.transform.parent.name.ToLower().Contains("right");
+            playerAnimator.SetInteger(isRight ? rightHandPoseHash : leftHandPoseHash, 0);
         }
 
         private void OnGrab(SelectEnterEventArgs args)
         {
-            interactable = args.interactableObject;
+            interactable = args.interactableObject as UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractable;
             var interactor = args.interactorObject.transform;
 
-            pokeInteractor = interactor.parent.GetComponentInChildren<XRPokeInteractor>();
-            interactorLineVisual = interactor.GetComponentInChildren<XRInteractorLineVisual>();
+            pokeInteractor = interactor.parent.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Interactors.XRPokeInteractor>();
+            interactorLineVisual = interactor.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Interactors.Visuals.XRInteractorLineVisual>();
 
             pokeInteractor.gameObject.SetActive(false);
             if (interactorLineVisual != null)
@@ -116,14 +114,12 @@ namespace ReadyPlayerMe.XR
                 interactorLineVisual.enabled = false;
             }
 
-            grabInteractable.interactionLayerMask = ignoreRaycastMask;
+            grabInteractable.interactionLayers = ignoreRaycastMask.value;
 
-            var handedness = interactor.parent.name.ToLower().Contains("right")
-                ? Handedness.Right
-                : Handedness.Left;
-            trackedHand = handedness == Handedness.Right ? vrik.references.rightHand : vrik.references.leftHand;
-            positionMultiplier = handedness == Handedness.Right ? 1 : -1;
-            playerAnimator.SetInteger(handedness == Handedness.Right ? rightHandPoseHash : leftHandPoseHash,
+            bool isRight = interactor.parent.name.ToLower().Contains("right");
+            trackedHand = isRight ? vrik.references.rightHand : vrik.references.leftHand;
+            positionMultiplier = isRight ? 1 : -1;
+            playerAnimator.SetInteger(isRight ? rightHandPoseHash : leftHandPoseHash,
                 (int)handAnimation);
         }
     }
