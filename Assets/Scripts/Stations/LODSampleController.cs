@@ -40,8 +40,17 @@ namespace ReadyPlayerMe.XR
 #if UNITY_EDITOR
         private void OnValidate()
         {
-            foreach (var lodSampleGroup in group)
+            if (group == null || group.Count == 0)
             {
+                return;
+            }
+
+            for (int i = 0; i < group.Count; i++)
+            {
+                var lodSampleGroup = group[i];
+                if (lodSampleGroup == null)
+                    continue;
+
                 lodSampleGroup.memoryUsage = AssetSize(lodSampleGroup.Model);
             }
         }

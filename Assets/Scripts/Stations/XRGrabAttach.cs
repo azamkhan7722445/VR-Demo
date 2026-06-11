@@ -25,14 +25,14 @@ namespace ReadyPlayerMe.XR
         [SerializeField] private Vector3 positionOffset;
         [SerializeField] private Vector3 rotationOffset;
         [SerializeField] private XRHandAnimation handAnimation;
-        private int defaultLayerMask;
+        private int originalLayer;
 
-        private XRGrabInteractable grabInteractable;
-        private int ignoreRaycastMask;
-        private IXRInteractable interactable;
-        private XRInteractorLineVisual interactorLineVisual;
+        private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grabInteractable;
+        
+        private UnityEngine.XR.Interaction.Toolkit.Interactables.IXRInteractable interactable;
+        private UnityEngine.XR.Interaction.Toolkit.Interactors.Visuals.XRInteractorLineVisual interactorLineVisual;
 
-        private XRPokeInteractor pokeInteractor;
+        private UnityEngine.XR.Interaction.Toolkit.Interactors.XRPokeInteractor pokeInteractor;
         private float positionMultiplier;
         private Transform trackedHand;
         private VRIK vrik => AvatarComponentReferences.Instance.Vrik;
@@ -40,8 +40,6 @@ namespace ReadyPlayerMe.XR
 
         private void Start()
         {
-            defaultLayerMask = LayerMask.GetMask(DEFAULT_LAYER);
-            ignoreRaycastMask = LayerMask.GetMask(IGNORE_RAYCAST_LAYER);
             vrik.GetIKSolver().OnPostUpdate += OnPostUpdate;
         }
 
@@ -49,7 +47,8 @@ namespace ReadyPlayerMe.XR
         {
             Debug.Log("XRGrabAttach enabled");
 
-            grabInteractable = GetComponent<XRGrabInteractable>();
+            grabInteractable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+            originalLayer = grabInteractable != null ? grabInteractable.gameObject.layer : gameObject.layer;
             grabInteractable.selectEntered.AddListener(OnGrab);
             grabInteractable.selectExited.AddListener(OnRelease);
         }
@@ -94,7 +93,7 @@ namespace ReadyPlayerMe.XR
                 interactorLineVisual.enabled = true;
             }
 
-            grabInteractable.interactionLayerMask = defaultLayerMask;
+            grabInteractable.gameObject.layer = originalLayer;
 
             var handedness = releaseInteractor.transform.parent.name.ToLower().Contains("right")
                 ? Handedness.Right
@@ -107,8 +106,8 @@ namespace ReadyPlayerMe.XR
             interactable = args.interactableObject;
             var interactor = args.interactorObject.transform;
 
-            pokeInteractor = interactor.parent.GetComponentInChildren<XRPokeInteractor>();
-            interactorLineVisual = interactor.GetComponentInChildren<XRInteractorLineVisual>();
+            pokeInteractor = interactor.parent.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Interactors.XRPokeInteractor>();
+            interactorLineVisual = interactor.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Interactors.Visuals.XRInteractorLineVisual>();
 
             pokeInteractor.gameObject.SetActive(false);
             if (interactorLineVisual != null)
@@ -116,7 +115,7 @@ namespace ReadyPlayerMe.XR
                 interactorLineVisual.enabled = false;
             }
 
-            grabInteractable.interactionLayerMask = ignoreRaycastMask;
+            grabInteractable.gameObject.layer = LayerMask.NameToLayer(IGNORE_RAYCAST_LAYER);
 
             var handedness = interactor.parent.name.ToLower().Contains("right")
                 ? Handedness.Right

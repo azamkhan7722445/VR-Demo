@@ -206,7 +206,9 @@ namespace ReadyPlayerMe.XR
 
             var avatarLoaderSettings = AvatarLoaderSettings.LoadSettings();
             var paramHash = AvatarCache.GetAvatarConfigurationHash(avatarLoaderSettings.AvatarConfig);
-            var path = $"{DirectoryUtility.GetRelativeProjectPath(args.Avatar.name, paramHash)}/{args.Avatar.name}";
+            var avatarFolder = $"Assets/Ready Player Me/{paramHash}";
+            EnsureAssetFolderExists(avatarFolder);
+            var path = $"{avatarFolder}/{args.Avatar.name}";
             if (!avatarLoaderSettings.AvatarCachingEnabled)
             {
                 SDKLogger.LogWarning("AvatarPerformanceGenerator",
@@ -234,6 +236,23 @@ namespace ReadyPlayerMe.XR
 
             DestroyImmediate(avatar);
             DestroyImmediate(args.Avatar, true);
+        }
+
+        private static void EnsureAssetFolderExists(string folderPath)
+        {
+            if (AssetDatabase.IsValidFolder(folderPath)) return;
+
+            var parts = folderPath.Split('/');
+            var current = parts[0];
+            for (int i = 1; i < parts.Length; i++)
+            {
+                var next = current + "/" + parts[i];
+                if (!AssetDatabase.IsValidFolder(next))
+                {
+                    AssetDatabase.CreateFolder(current, parts[i]);
+                }
+                current = next;
+            }
         }
 #endif
     }
